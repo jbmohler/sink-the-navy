@@ -1,0 +1,33 @@
+services:
+  haproxy:
+    image: haproxy:2.9
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./server/haproxy:/usr/local/etc/haproxy:ro
+  backapi:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.api
+    secrets:
+      - config
+    environment:
+      - PYTHONUNBUFFERED=1
+      - USER_CONFIG_FILE=/run/secrets/config
+    volumes:
+      - ./backend:/app/backend:ro
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.angular
+    volumes:
+      - ./frontend:/app
+
+secrets:
+  config:
+    file: ./secrets/user-config.json
+

@@ -1,0 +1,18 @@
+FROM node:18
+
+# Yes, we like to stay up-to-date but the docker base image lags and I'm tired
+# of the warnings.
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+# This max-old-space limit resolves a sporadic memory core dump in the CI
+# runner and certain docker users
+ENV NODE_OPTIONS="--max-old-space-size=8192"
+
+RUN mkdir /app
+RUN chown 1000:1000 /app
+USER 1000:1000
+
+EXPOSE 4200
+
+WORKDIR /app
+
+CMD ["npx", "ng", "serve", "--host=0.0.0.0"]
