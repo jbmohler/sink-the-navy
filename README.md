@@ -7,10 +7,15 @@ Sink the Navy is battleship but simply better.
 Backend service is intended to do multi-player game serving perhaps eventually
 but first to do screen-share to a large screen monitor.
 
-# Angular Component Notes
+# Angular Notes
 
 Here are some notes about how the angular service was set up and components can
 be added.
+
+```shell
+# to run prettier
+docker run -it --rm -u 1000:1000 -v ${PWD}/frontend:/app -w /app node:18 npx prettier src/ --write
+```
 
 * See the angular dockerfile where we also specify the user
 

@@ -1,1 +1,33 @@
-<p>game works!</p>
+<div class="container">
+  <div class="corner upper-left"></div>
+  <div *ngFor="let iCol of columns" class="index">
+    <span> {{ iCol }}</span>
+  </div>
+  <div class="corner upper-right"></div>
+  <ng-container *ngFor="let iRow of rows">
+    <div class="index">
+      <span> {{ iRow }}</span>
+    </div>
+    <div
+      *ngFor="let iCol of columns"
+      [ngClass]="{
+        water: true,
+        'blue-left': iCol === 'E' || iCol === 'K',
+        'blue-right': iCol === 'D' || iCol === 'J',
+        'blue-bottom': iRow === 4 || iRow === 10,
+        'blue-top': iRow === 5 || iRow === 11
+      }"
+      (click)="onClickOpenWater(iCol, iRow)"
+    >
+      <span> {{ value(iCol, iRow) }}</span>
+    </div>
+    <div class="index">
+      <span> {{ iRow }}</span>
+    </div>
+  </ng-container>
+  <div class="corner lower-left"></div>
+  <div *ngFor="let iCol of columns" class="index">
+    <span> {{ iCol }}</span>
+  </div>
+  <div class="corner lower-right"></div>
+</div>
