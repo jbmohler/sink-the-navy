@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
 })
@@ -14,6 +15,11 @@ export class GameComponent {
 
   values: { [key: string]: number | undefined } = {};
 
+  currentTurn = 1;
+  currentMode: 'turn' | 'hilite' = 'turn';
+
+  highlights: string[] = [];
+
   value(iCol: string, iRow: number) {
     const keyStr = `${iCol}:${iRow}`;
     return this.values[keyStr];
@@ -21,7 +27,34 @@ export class GameComponent {
 
   onClickOpenWater(iCol: string, iRow: number) {
     const keyStr = `${iCol}:${iRow}`;
-    this.values[keyStr] = 1;
-    console.log(iCol, iRow);
+    // console.log(iCol, iRow, this.values[keyStr] );
+
+    if (this.currentMode === 'turn') {
+      if (this.values[keyStr] === undefined) {
+        this.values[keyStr] = this.currentTurn;
+      } else if (this.values[keyStr] === this.currentTurn) {
+        this.values[keyStr] = undefined;
+      } else {
+        alert('already occupied');
+        //this.values[keyStr] = this.currentTurn;
+      }
+    }
+
+    if (this.currentMode === 'hilite') {
+      this.highlights = [keyStr];
+      console.log(this.highlights);
+
+      setTimeout(() => {
+        this.highlights = [];
+      }, 4000);
+    }
+  }
+
+  onCompleteTurn() {
+    this.currentTurn += 1;
+  }
+
+  onHighlight() {
+    this.currentMode = this.currentMode === 'turn' ? 'hilite' : 'turn';
   }
 }

@@ -1,3 +1,11 @@
+<div class="controls">
+  <span>Turn: <input type="number" [(ngModel)]="currentTurn" /></span>
+  <div class="buttons">
+    <button (click)="onCompleteTurn()">Next</button>
+    <button (click)="onHighlight()">Hi-lite</button>
+  </div>
+</div>
+
 <div class="container">
   <div class="corner upper-left"></div>
   <div *ngFor="let iCol of columns" class="index">
@@ -15,7 +23,8 @@
         'blue-left': iCol === 'E' || iCol === 'K',
         'blue-right': iCol === 'D' || iCol === 'J',
         'blue-bottom': iRow === 4 || iRow === 10,
-        'blue-top': iRow === 5 || iRow === 11
+        'blue-top': iRow === 5 || iRow === 11,
+        highlight: highlights.includes(iCol + ':' + iRow)
       }"
       (click)="onClickOpenWater(iCol, iRow)"
     >
