@@ -19,7 +19,7 @@ services:
       - PYTHONUNBUFFERED=1
       - USER_CONFIG_FILE=/run/secrets/config
     volumes:
-      - ./backend:/app/backend:ro
+      - ./backend:/app:ro
   frontend:
     build:
       context: ./frontend
