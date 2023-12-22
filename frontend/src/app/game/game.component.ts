@@ -1,6 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+function convertUint8_to_hexStr(uint8: Uint8Array) {
+  return Array.from(uint8)
+    .map((i) => i.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function getClientId() {
+  let arr = new Uint8Array(8);
+  window.crypto.getRandomValues(arr);
+  return convertUint8_to_hexStr(arr);
+}
 
 @Component({
   selector: 'app-game',
@@ -9,7 +23,10 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './game.component.html',
   styleUrl: './game.component.css',
 })
-export class GameComponent {
+export class GameComponent implements OnInit {
+  private http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef);
+
   columns = 'A B C D E F G H I J K L M N'.split(' ');
   rows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
 
@@ -20,9 +37,37 @@ export class GameComponent {
 
   highlights: string[] = [];
 
+  clientId = getClientId();
+
+  ngOnInit() {
+    this.createEventSource().subscribe((data) => {
+      // console.log(data);
+      if (data.source !== this.clientId) {
+        for (const keyStr in data.data) {
+          this.values[keyStr] = data.data[keyStr];
+          this.cdr.detectChanges();
+        }
+      }
+    });
+  }
+
   value(iCol: string, iRow: number) {
     const keyStr = `${iCol}:${iRow}`;
     return this.values[keyStr];
+  }
+
+  setCellValue(keyStr: string, value: number | undefined) {
+    const data = {
+      source: this.clientId,
+      data: { [keyStr]: value ?? null },
+    };
+    this.http
+      .put('/api/cell-shot', JSON.stringify(data), {
+        headers: { 'Content-Type': 'application/json' },
+      })
+      .subscribe((d) => {
+        this.values[keyStr] = value;
+      });
   }
 
   onClickOpenWater(iCol: string, iRow: number) {
@@ -31,9 +76,9 @@ export class GameComponent {
 
     if (this.currentMode === 'turn') {
       if (this.values[keyStr] === undefined) {
-        this.values[keyStr] = this.currentTurn;
+        this.setCellValue(keyStr, this.currentTurn);
       } else if (this.values[keyStr] === this.currentTurn) {
-        this.values[keyStr] = undefined;
+        this.setCellValue(keyStr, undefined);
       } else {
         alert('already occupied');
         //this.values[keyStr] = this.currentTurn;
@@ -56,5 +101,16 @@ export class GameComponent {
 
   onHighlight() {
     this.currentMode = this.currentMode === 'turn' ? 'hilite' : 'turn';
+  }
+
+  createEventSource(): Observable<any> {
+    const eventSource = new EventSource('/api/cell-events');
+
+    return new Observable((observer) => {
+      eventSource.onmessage = (event) => {
+        const messageData = JSON.parse(event.data);
+        observer.next(messageData);
+      };
+    });
   }
 }
