@@ -50,9 +50,15 @@ export class GameComponent implements OnInit {
 
       this.createEventSource().subscribe((data) => {
         // console.log(data);
-        if (data.source !== this.clientId) {
-          for (const keyStr in data.data) {
-            this.values[keyStr] = data.data[keyStr];
+        if (data.source !== this.clientId && data.shot) {
+          for (const keyStr in data.shot) {
+            this.values[keyStr] = data.shot[keyStr];
+          }
+          this.cdr.detectChanges();
+        }
+        if (data.source === 'root' && data.board) {
+          for (const keyStr in data.board) {
+            this.values[keyStr] = data.board[keyStr];
           }
           this.cdr.detectChanges();
         }
@@ -68,7 +74,7 @@ export class GameComponent implements OnInit {
   setCellValue(keyStr: string, value: number | undefined) {
     const data = {
       source: this.clientId,
-      data: { [keyStr]: value ?? null },
+      shot: { [keyStr]: value ?? null },
     };
     this.http
       .put(`/api/game/${this.code}/cell-shot`, data, {

@@ -67,17 +67,20 @@ id: {index}
 
     async def stream_until(response, q):
         while True:
-            value = await q.get()
-            await send_event_object(response, value)
+            try:
+                value = await asyncio.wait_for(q.get(), 15)
+                await send_event_object(response, value)
+            except asyncio.exceptions.TimeoutError:
+                await asyncio.shield(response.send(":keepalive\n\n"))
 
     q = await game.add_queue()
 
-    v = {"board": game.theboard, "hilites": game.hilites}
+    v = {"source": "root", "board": game.theboard, "hilites": game.hilites}
     await send_event_object(response, v)
 
     # run for 3*60 seconds
     try:
-        await asyncio.wait_for(stream_until(response, q), 3 * 6)
+        await asyncio.wait_for(stream_until(response, q), 3 * 60)
     except asyncio.exceptions.TimeoutError:
         # TimeoutError is working as designed
         pass
@@ -112,7 +115,12 @@ async def get_api_probe_game(request):
 async def put_api_cell_shot(request, code):
     game = get_game(code)
 
-    await game.enqueue(request.json)
+    body = request.json
+    if "shot" in body:
+        # TODO add some defensive validation here?
+        game.theboard.update(body["shot"])
+
+    await game.enqueue(body)
     return sanic.response.json({})
 
 

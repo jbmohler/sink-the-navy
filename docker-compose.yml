@@ -18,8 +18,10 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - USER_CONFIG_FILE=/run/secrets/config
+      - GAMEDIR=/games
     volumes:
       - ./backend:/app:ro
+      - ./games:/games
   frontend:
     build:
       context: ./frontend
