@@ -17,7 +17,9 @@ export class LobbyComponent {
   gameCode?: string;
 
   onNewGame() {
-    this.router.navigate(['/game']);
+    this.http.post('/api/create-game', {}).subscribe((data: any) => {
+      this.router.navigate(['/game'], { queryParams: { code: data.code } });
+    });
   }
 
   onConnect() {

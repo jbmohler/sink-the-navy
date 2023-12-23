@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -25,7 +26,10 @@ function getClientId() {
 })
 export class GameComponent implements OnInit {
   private http = inject(HttpClient);
+  private activated = inject(ActivatedRoute);
   private cdr = inject(ChangeDetectorRef);
+
+  code?: string;
 
   columns = 'A B C D E F G H I J K L M N'.split(' ');
   rows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
@@ -40,14 +44,19 @@ export class GameComponent implements OnInit {
   clientId = getClientId();
 
   ngOnInit() {
-    this.createEventSource().subscribe((data) => {
-      // console.log(data);
-      if (data.source !== this.clientId) {
-        for (const keyStr in data.data) {
-          this.values[keyStr] = data.data[keyStr];
+    this.activated.queryParams.subscribe((params: any) => {
+      this.code = params.code;
+      console.log(params);
+
+      this.createEventSource().subscribe((data) => {
+        // console.log(data);
+        if (data.source !== this.clientId) {
+          for (const keyStr in data.data) {
+            this.values[keyStr] = data.data[keyStr];
+          }
           this.cdr.detectChanges();
         }
-      }
+      });
     });
   }
 
@@ -62,7 +71,7 @@ export class GameComponent implements OnInit {
       data: { [keyStr]: value ?? null },
     };
     this.http
-      .put('/api/cell-shot', JSON.stringify(data), {
+      .put(`/api/game/${this.code}/cell-shot`, data, {
         headers: { 'Content-Type': 'application/json' },
       })
       .subscribe((d) => {
@@ -104,7 +113,7 @@ export class GameComponent implements OnInit {
   }
 
   createEventSource(): Observable<any> {
-    const eventSource = new EventSource('/api/cell-events');
+    const eventSource = new EventSource(`/api/game/${this.code}/cell-events`);
 
     return new Observable((observer) => {
       eventSource.onmessage = (event) => {

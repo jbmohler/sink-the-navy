@@ -1,36 +1,50 @@
 import json
+import random
 import sanic
 import asyncio
 
 app = sanic.Sanic("api-server")
 
-theboard = {}
-hilites = {}
 
-qlock = asyncio.Lock()
-current_queues = []
+class Game:
+    def __init__(self):
+        self.qlock = asyncio.Lock()
+        self.current_queues = []
+
+        self.theboard = {}
+        self.hilites = {}
+
+    async def add_queue(self):
+        q = asyncio.Queue()
+        async with self.qlock:
+            self.current_queues.append(q)
+        return q
+
+    async def remove_queue(self, q):
+        async with self.qlock:
+            self.current_queues.remove(q)
+
+    async def enqueue(self, item):
+        async with self.qlock:
+            for q in self.current_queues:
+                await q.put(item)
 
 
-async def add_queue():
-    q = asyncio.Queue()
-    async with qlock:
-        current_queues.append(q)
-    return q
+GAMES = {}
 
 
-async def remove_queue(q):
-    async with qlock:
-        current_queues.remove(q)
+def get_game(code):
+    global GAMES
+
+    if code not in GAMES:
+        GAMES[code] = Game()
+    return GAMES[code]
 
 
-async def enqueue(item):
-    async with qlock:
-        for q in current_queues:
-            await q.put(item)
+@app.route("/api/game/<code>/cell-events")
+async def get_api_cell_events(request, code):
+    game = get_game(code)
 
-
-@app.route("/api/cell-events")
-async def get_api_cell_events(request):
     # Content type as defined by
     # https://stackoverflow.com/questions/52098863/whats-the-difference-between-text-event-stream-and-application-streamjson
 
@@ -56,9 +70,9 @@ id: {index}
             value = await q.get()
             await send_event_object(response, value)
 
-    q = await add_queue()
+    q = await game.add_queue()
 
-    v = {"board": theboard, "hilites": hilites}
+    v = {"board": game.theboard, "hilites": game.hilites}
     await send_event_object(response, v)
 
     # run for 3*60 seconds
@@ -68,7 +82,7 @@ id: {index}
         # TimeoutError is working as designed
         pass
 
-    await remove_queue(q)
+    await game.remove_queue(q)
 
     await response.eof()
 
@@ -78,14 +92,27 @@ async def test(request):
     return sanic.response.json({"hello": "world"})
 
 
+def generate_code():
+    digits = f"{random.randint(0, 999999):06n}"
+    return f"{digits[:3]}-{digits[3:]}"
+
+
+@app.route("/api/create-game", methods=["POST"])
+async def post_api_create_game(request):
+    data = {"code": generate_code()}
+    return sanic.response.json(data)
+
+
 @app.route("/api/probe-game")
 async def get_api_probe_game(request):
     return sanic.response.json({"code": request.args.get("code")})
 
 
-@app.route("/api/cell-shot", methods=["PUT"])
-async def put_api_cell_shot(request):
-    await enqueue(request.json)
+@app.route("/api/game/<code>/cell-shot", methods=["PUT"])
+async def put_api_cell_shot(request, code):
+    game = get_game(code)
+
+    await game.enqueue(request.json)
     return sanic.response.json({})
 
 
