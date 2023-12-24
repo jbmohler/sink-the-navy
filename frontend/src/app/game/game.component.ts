@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, take } from 'rxjs';
 
 function convertUint8_to_hexStr(uint8: Uint8Array) {
   return Array.from(uint8)
@@ -50,12 +50,19 @@ export class GameComponent implements OnInit {
 
       this.createEventSource().subscribe((data) => {
         // console.log(data);
+
         if (data.source !== this.clientId && data.shot) {
           for (const keyStr in data.shot) {
             this.values[keyStr] = data.shot[keyStr];
           }
           this.cdr.detectChanges();
         }
+
+        if (data.source !== this.clientId && data.highlights) {
+          this.highlights = data.highlights;
+          this.cdr.detectChanges();
+        }
+
         if (data.source === 'root' && data.board) {
           for (const keyStr in data.board) {
             this.values[keyStr] = data.board[keyStr];
@@ -71,18 +78,22 @@ export class GameComponent implements OnInit {
     return this.values[keyStr];
   }
 
+  putGameData(tail: string, data: any) {
+    return this.http
+      .put(`/api/game/${this.code}/${tail}`, data, {
+        headers: { 'Content-Type': 'application/json' },
+      })
+      .pipe(take(1));
+  }
+
   setCellValue(keyStr: string, value: number | undefined) {
     const data = {
       source: this.clientId,
       shot: { [keyStr]: value ?? null },
     };
-    this.http
-      .put(`/api/game/${this.code}/cell-shot`, data, {
-        headers: { 'Content-Type': 'application/json' },
-      })
-      .subscribe((d) => {
-        this.values[keyStr] = value;
-      });
+    this.putGameData('cell-shot', data).subscribe((d) => {
+      this.values[keyStr] = value;
+    });
   }
 
   onClickOpenWater(iCol: string, iRow: number) {
@@ -101,12 +112,16 @@ export class GameComponent implements OnInit {
     }
 
     if (this.currentMode === 'hilite') {
-      this.highlights = [keyStr];
-      console.log(this.highlights);
+      this.highlights.push(keyStr);
 
-      setTimeout(() => {
-        this.highlights = [];
-      }, 4000);
+      const data = { source: this.clientId, highlights: this.highlights };
+      this.putGameData('cell-highlight', data).subscribe((data) => {
+        setTimeout(() => {
+          this.highlights = [];
+          const data = { source: this.clientId, highlights: this.highlights };
+          this.putGameData('cell-highlight', data).subscribe();
+        }, 10000);
+      });
     }
   }
 

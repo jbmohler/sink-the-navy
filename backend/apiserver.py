@@ -33,7 +33,7 @@ class Game:
 GAMES = {}
 
 
-def get_game(code):
+def create_game(code):
     global GAMES
 
     if code not in GAMES:
@@ -41,9 +41,18 @@ def get_game(code):
     return GAMES[code]
 
 
+def get_created_game(code):
+    global GAMES
+
+    try:
+        return GAMES[code]
+    except KeyError:
+        raise sanic.exceptions.NotFound(f"no game with code {code} found")
+
+
 @app.route("/api/game/<code>/cell-events")
 async def get_api_cell_events(request, code):
-    game = get_game(code)
+    game = get_created_game(code)
 
     # Content type as defined by
     # https://stackoverflow.com/questions/52098863/whats-the-difference-between-text-event-stream-and-application-streamjson
@@ -102,23 +111,40 @@ def generate_code():
 
 @app.route("/api/create-game", methods=["POST"])
 async def post_api_create_game(request):
-    data = {"code": generate_code()}
+    code = generate_code()
+    data = {"code": code}
+    create_game(code)
     return sanic.response.json(data)
 
 
-@app.route("/api/probe-game")
-async def get_api_probe_game(request):
-    return sanic.response.json({"code": request.args.get("code")})
+@app.route("/api/game/<code>/probe")
+async def get_api_probe_game(request, code):
+    game = get_created_game(code)
+
+    return sanic.response.json({"code": code})
 
 
 @app.route("/api/game/<code>/cell-shot", methods=["PUT"])
 async def put_api_cell_shot(request, code):
-    game = get_game(code)
+    game = get_created_game(code)
 
     body = request.json
     if "shot" in body:
         # TODO add some defensive validation here?
         game.theboard.update(body["shot"])
+
+    await game.enqueue(body)
+    return sanic.response.json({})
+
+
+@app.route("/api/game/<code>/cell-highlight", methods=["PUT"])
+async def put_api_cell_highlight(request, code):
+    game = get_created_game(code)
+
+    body = request.json
+    if "highlight" in body:
+        # TODO add some defensive validation here?
+        game.hilites.update(body["highlights"])
 
     await game.enqueue(body)
     return sanic.response.json({})
