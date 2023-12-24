@@ -85,6 +85,16 @@
   color: #7b1fa2;
 }
 
+.container .turnhighlight {
+  background-color: #fad7a0;
+  color: #7b1fa2;
+}
+
+.container .liveshot {
+  background-color: #6082b6;
+  color: #7b1fa2;
+}
+
 .container .index {
   background-color: white;
   border: 1px black solid;

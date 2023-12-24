@@ -1,5 +1,12 @@
 <div class="controls">
   <span>Turn: <input type="number" [(ngModel)]="currentTurn" /></span>
+  <span
+    >Markers:
+    <input
+      type="text"
+      [(ngModel)]="turnmarksDelimited"
+      (change)="onEnteredTMD()"
+  /></span>
   <div class="buttons">
     <button (click)="onCompleteTurn()">Next</button>
     <button (click)="onHighlight()">Hi-lite</button>
@@ -24,7 +31,9 @@
         'blue-right': iCol === 'D' || iCol === 'J',
         'blue-bottom': iRow === 4 || iRow === 10,
         'blue-top': iRow === 5 || iRow === 11,
-        highlight: highlights.includes(iCol + ':' + iRow)
+        highlight: highlights.includes(iCol + ':' + iRow),
+        turnhighlight: turnmarks.includes(value(iCol, iRow) ?? -100),
+        liveshot: value(iCol, iRow) === currentTurn
       }"
       (click)="onClickOpenWater(iCol, iRow)"
     >

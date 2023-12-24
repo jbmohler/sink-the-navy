@@ -40,6 +40,8 @@ export class GameComponent implements OnInit {
   currentMode: 'turn' | 'hilite' = 'turn';
 
   highlights: string[] = [];
+  turnmarksDelimited: string = '';
+  turnmarks: number[] = [];
 
   clientId = getClientId();
 
@@ -127,10 +129,16 @@ export class GameComponent implements OnInit {
 
   onCompleteTurn() {
     this.currentTurn += 1;
+    this.turnmarks = [(this.currentTurn ?? 0) - 1, (this.currentTurn ?? 0) - 3];
   }
 
   onHighlight() {
     this.currentMode = this.currentMode === 'turn' ? 'hilite' : 'turn';
+  }
+
+  onEnteredTMD() {
+    console.log(this.turnmarksDelimited);
+    this.turnmarks = this.turnmarksDelimited.split(' ').map(parseFloat);
   }
 
   createEventSource(): Observable<any> {
