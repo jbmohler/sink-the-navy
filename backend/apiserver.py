@@ -119,7 +119,7 @@ async def post_api_create_game(request):
 
 @app.route("/api/game/<code>/probe")
 async def get_api_probe_game(request, code):
-    game = get_created_game(code)
+    get_created_game(code)
 
     return sanic.response.json({"code": code})
 
