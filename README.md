@@ -14,13 +14,13 @@ be added.
 
 ```shell
 # to run prettier
-docker run -it --rm -u 1000:1000 -v ${PWD}/frontend:/app -w /app node:18 npx prettier src/ --write
+docker run -it --rm -u 1000:1000 -v ${PWD}/frontend:/app -w /app node:20 npx prettier src/ --write
 ```
 
 * See the angular dockerfile where we also specify the user
 
 ```shell
-$ docker run -it --rm -u 1000:1000 -v ${PWD}/frontend:/app -w /app node:18 bash
+$ docker run -it --rm -u 1000:1000 -v ${PWD}/frontend:/app -w /app node:20 bash
 root@f024766e6637:/frontend# ls
 README.md  angular.json  node_modules  package-lock.json  package.json  src  tsconfig.app.json  tsconfig.json  tsconfig.spec.json
 root@f024766e6637:/frontend# npm install -g @angular/cli

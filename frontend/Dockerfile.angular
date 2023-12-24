@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:20
 
 # Yes, we like to stay up-to-date but the docker base image lags and I'm tired
 # of the warnings.
