@@ -65,6 +65,14 @@ export class GameComponent implements OnInit {
           this.cdr.detectChanges();
         }
 
+        if (data.source !== this.clientId && data.turnmarks) {
+          this.turnmarksDelimited = data.turnmarks
+            .map((r: any) => r.toString())
+            .join(' ');
+          this.turnmarks = data.turnmarks;
+          this.cdr.detectChanges();
+        }
+
         if (data.source === 'root' && data.board) {
           for (const keyStr in data.board) {
             this.values[keyStr] = data.board[keyStr];
@@ -129,7 +137,6 @@ export class GameComponent implements OnInit {
 
   onCompleteTurn() {
     this.currentTurn += 1;
-    this.turnmarks = [(this.currentTurn ?? 0) - 1, (this.currentTurn ?? 0) - 3];
   }
 
   onHighlight() {
@@ -137,8 +144,11 @@ export class GameComponent implements OnInit {
   }
 
   onEnteredTMD() {
-    console.log(this.turnmarksDelimited);
-    this.turnmarks = this.turnmarksDelimited.split(' ').map(parseFloat);
+    const turnmarks = this.turnmarksDelimited.split(' ').map(parseFloat);
+    const data = { source: this.clientId, turnmarks: turnmarks };
+    this.putGameData('turn-highlight', data).subscribe((data) => {
+      this.turnmarks = turnmarks;
+    });
   }
 
   createEventSource(): Observable<any> {

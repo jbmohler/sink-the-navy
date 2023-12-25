@@ -1,3 +1,4 @@
+import os
 import json
 import random
 import sanic
@@ -7,12 +8,14 @@ app = sanic.Sanic("api-server")
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, board=None):
         self.qlock = asyncio.Lock()
         self.current_queues = []
 
-        self.theboard = {}
+        self.upcoming = 1
+        self.theboard = board or {}
         self.hilites = {}
+        self.turnmarks = []
 
     async def add_queue(self):
         q = asyncio.Queue()
@@ -29,6 +32,9 @@ class Game:
             for q in self.current_queues:
                 await q.put(item)
 
+    def get_meta(self, code):
+        return {"code": code, "upcoming": self.upcoming}
+
 
 GAMES = {}
 
@@ -36,18 +42,44 @@ GAMES = {}
 def create_game(code):
     global GAMES
 
-    if code not in GAMES:
-        GAMES[code] = Game()
+    gamedir = os.path.join(os.getenv("GAMESDIR"), code)
+    metajson = os.path.join(gamedir, "meta.json")
+    if os.path.exists(gamedir) and os.path.isfile(metajson):
+        raise sanic.exceptions.SanicException(
+            "duplicate code generated", status_code=501
+        )
+
+    game = Game()
+    GAMES[code] = game
+
+    os.mkdir(gamedir)
+    with open(metajson, "w") as metafile:
+        metafile.write(json.dumps(game.get_meta(code)))
+
+    board = {}
+    with open(os.path.join(gamedir, "board.json"), "w") as boardfile:
+        boardfile.write(json.dumps(board))
+
     return GAMES[code]
 
 
 def get_created_game(code):
     global GAMES
 
-    try:
+    if code in GAMES:
         return GAMES[code]
-    except KeyError:
+
+    gamedir = os.path.join(os.getenv("GAMESDIR"), code)
+    meta = os.path.join(gamedir, "meta.json")
+    if not os.path.exists(gamedir) or not os.path.isfile(meta):
         raise sanic.exceptions.NotFound(f"no game with code {code} found")
+
+    board = {}
+    with open(os.path.join(gamedir, "board.json"), "r") as boardfile:
+        board = json.loads(boardfile.read())
+
+    GAMES[code] = Game(board)
+    return GAMES[code]
 
 
 @app.route("/api/game/<code>/cell-events")
@@ -84,7 +116,12 @@ id: {index}
 
     q = await game.add_queue()
 
-    v = {"source": "root", "board": game.theboard, "hilites": game.hilites}
+    v = {
+        "source": "root",
+        "board": game.theboard,
+        "hilites": game.hilites,
+        "turnmarks": game.turnmarks,
+    }
     await send_event_object(response, v)
 
     # run for 3*60 seconds
@@ -133,6 +170,26 @@ async def put_api_cell_shot(request, code):
         # TODO add some defensive validation here?
         game.theboard.update(body["shot"])
 
+        gamedir = os.path.join(os.getenv("GAMESDIR"), code)
+        with open(os.path.join(gamedir, "board.json"), "w") as boardfile:
+            boardfile.write(json.dumps(game.theboard))
+
+    await game.enqueue(body)
+    return sanic.response.json({})
+
+
+@app.route("/api/game/<code>/complete-turn", methods=["PUT"])
+async def put_api_complete_turn(request, code):
+    game = get_created_game(code)
+
+    body = request.json
+    if "turn" in body:
+        game.upcoming = body["turn"] + 1
+
+        gamedir = os.path.join(os.getenv("GAMESDIR"), code)
+        with open(os.path.join(gamedir, "meta.json"), "w") as metafile:
+            metafile.write(json.dumps(game.get_meta(code)))
+
     await game.enqueue(body)
     return sanic.response.json({})
 
@@ -145,6 +202,19 @@ async def put_api_cell_highlight(request, code):
     if "highlight" in body:
         # TODO add some defensive validation here?
         game.hilites.update(body["highlights"])
+
+    await game.enqueue(body)
+    return sanic.response.json({})
+
+
+@app.route("/api/game/<code>/turn-highlight", methods=["PUT"])
+async def put_api_turn_highlight(request, code):
+    game = get_created_game(code)
+
+    body = request.json
+    if "turnmarks" in body:
+        # TODO add some defensive validation here?
+        game.turnmarks = body["turnmarks"]
 
     await game.enqueue(body)
     return sanic.response.json({})
