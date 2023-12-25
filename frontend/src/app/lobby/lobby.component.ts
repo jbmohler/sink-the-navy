@@ -23,10 +23,9 @@ export class LobbyComponent {
   }
 
   onConnect() {
-    const params = new HttpParams().set('code', this.gameCode!);
-    this.http.get('/api/probe-game', { params: params }).subscribe((data) => {
-      console.log(data);
-      this.router.navigate(['/game'], { queryParams: { code: this.gameCode } });
+    const candidate = this.gameCode!.replaceAll(' ', '');
+    this.http.get(`/api/game/${candidate}/probe`).subscribe((data: any) => {
+      this.router.navigate(['/game'], { queryParams: { code: data.code } });
     });
   }
 }

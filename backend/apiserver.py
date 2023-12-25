@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import random
 import sanic
 import asyncio
@@ -156,8 +157,12 @@ async def post_api_create_game(request):
 
 @app.route("/api/game/<code>/probe")
 async def get_api_probe_game(request, code):
-    get_created_game(code)
+    code = re.sub("[ -]", "", code)
+    if len(code) != 6:
+        raise sanic.exceptions.NotFound("game codes must be  numeric characters")
 
+    code = f"{code[:3]}-{code[3:]}"
+    get_created_game(code)
     return sanic.response.json({"code": code})
 
 
