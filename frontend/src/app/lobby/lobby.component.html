@@ -1,10 +1,14 @@
-Sink the Navy is like Battleship but better -- numerous players and shared map
-
-<div>
-  <button (click)="onNewGame()">New Game</button>
-</div>
-
-<div>
-  <input [(ngModel)]="gameCode" />
-  <button (click)="onConnect()">Connect</button>
+<div class="lobby">
+  <div>
+    <h1>Sink the Navy</h1>
+    <p>Like Battleship but better -- numerous players and shared map</p>
+    <p>Printable sheets: <a href="/assets/sink-the-navy.pdf">single page</a></p>
+  </div>
+  <div>
+    <button (click)="onNewGame()">New Game</button>
+  </div>
+  <div>
+    <input [(ngModel)]="gameCode" />
+    <button (click)="onConnect()">Connect</button>
+  </div>
 </div>

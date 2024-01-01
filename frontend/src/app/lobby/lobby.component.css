@@ -1,0 +1,9 @@
+h1 {
+  font-size: 12pt;
+}
+
+.lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
