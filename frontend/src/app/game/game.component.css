@@ -1,11 +1,24 @@
 .controls {
   padding: 10px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 10px;
 }
 
+.controls .hilight {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 20px;
+}
+
+.controls .hilight input {
+  width: 80px;
+  font-size: 20px;
+}
+
 .controls .buttons {
+  flex-grow: 2;
   display: flex;
   flex-direction: row;
   gap: 10px;
@@ -17,6 +30,10 @@
   background-color: #7393b3;
   font-size: 26px;
   padding: 6px;
+}
+
+.controls .connect {
+  font-size: 26px;
 }
 
 .container {

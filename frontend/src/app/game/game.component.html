@@ -1,15 +1,23 @@
 <div class="controls">
-  <span>Turn: <input type="number" [(ngModel)]="currentTurn" /></span>
-  <span
-    >Markers:
-    <input
-      type="text"
-      [(ngModel)]="turnmarksDelimited"
-      (change)="onEnteredTMD()"
-  /></span>
+  <div class="hilight">
+    <span>Turn: <input type="number" [(ngModel)]="currentTurn" /></span>
+    <span>
+      Markers:
+      <input
+        type="text"
+        [(ngModel)]="turnmarksDelimited"
+        (change)="onEnteredTMD()"
+      />
+    </span>
+  </div>
   <div class="buttons">
     <button (click)="onCompleteTurn()">Next</button>
     <button (click)="onHighlight()">Hi-lite</button>
+  </div>
+  <div class="connect">
+    <span>
+      Join Code: <b>{{ code }}</b>
+    </span>
   </div>
 </div>
 
