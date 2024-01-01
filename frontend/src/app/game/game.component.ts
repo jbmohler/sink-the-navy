@@ -55,9 +55,11 @@ export class GameComponent implements OnInit {
 
         if (data.source !== this.clientId && data.shot) {
           for (const keyStr in data.shot) {
-            this.values[keyStr] = data.shot[keyStr];
-            if (this.currentTurn !== data.shot[keyStr]) {
-              this.currentTurn = data.shot[keyStr];
+            const update = data.shot[keyStr];
+            const cvalue = update === null ? undefined : update;
+            this.values[keyStr] = cvalue;
+            if (cvalue && this.currentTurn !== cvalue) {
+              this.currentTurn = cvalue;
             }
           }
           this.cdr.detectChanges();
