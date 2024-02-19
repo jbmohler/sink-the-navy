@@ -125,9 +125,9 @@ id: {index}
     }
     await send_event_object(response, v)
 
-    # run for 3*60 seconds
+    # run for 45 mins
     try:
-        await asyncio.wait_for(stream_until(response, q), 3 * 60)
+        await asyncio.wait_for(stream_until(response, q), 45 * 60)
     except asyncio.exceptions.TimeoutError:
         # TimeoutError is working as designed
         pass
@@ -173,7 +173,10 @@ async def put_api_cell_shot(request, code):
     body = request.json
     if "shot" in body:
         # TODO add some defensive validation here?
+        clearing = [k for k, v in body["shot"].items() if v is None]
         game.theboard.update(body["shot"])
+        for clearkey in clearing:
+            del game.theboard[clearkey]
 
         gamedir = os.path.join(os.getenv("GAMESDIR"), code)
         with open(os.path.join(gamedir, "board.json"), "w") as boardfile:
